@@ -57,32 +57,29 @@ class RacerView(arcade.View):
         self.start_time = time.time()
         self.current_time = 0.0
 
-        for y in range(self.map_mask_checkpoints.height):
-            for x in range(self.map_mask_checkpoints.width):
-                if self.mask_checkpoints_pixels[x, y] == self.checkpoint_colour[self.current_colour_index] and (x, y) not in visited:
+        for colour in self.checkpoint_colour:
+            for y in range(self.map_mask_checkpoints.height):
+                for x in range(self.map_mask_checkpoints.width):
+                    if self.mask_checkpoints_pixels[x, y] == colour and (x, y) not in visited:
 
-                    # Flood fill to find the whole red band
-                    pixels = self.flood_fill_checkpoint(x, y, visited)
+                        pixels = self.flood_fill_checkpoint(x, y, visited, colour)
 
-                    # Convert pixel cluster to bounding box
-                    xs = [p[0] for p in pixels]
-                    ys = [p[1] for p in pixels]
+                        xs = [p[0] for p in pixels]
+                        ys = [p[1] for p in pixels]
 
-                    left   = min(xs) * 4
-                    right  = (max(xs) + 1) * 4
-                    bottom = (self.map_mask_checkpoints.height - max(ys) - 1) * 4
-                    top    = (self.map_mask_checkpoints.height - min(ys)) * 4
+                        left   = min(xs) * 4
+                        right  = (max(xs) + 1) * 4
+                        bottom = (self.map_mask_checkpoints.height - max(ys) - 1) * 4
+                        top    = (self.map_mask_checkpoints.height - min(ys)) * 4
 
-                    rect = arcade.Rect.from_kwargs(
-                        left=left,
-                        bottom=bottom,
-                        width=right - left,
-                        height=top - bottom
-                    )
+                        rect = arcade.Rect.from_kwargs(
+                            left=left, bottom=bottom,
+                            width=right - left, height=top - bottom
+                        )
 
-                    self.checkpoints.append(
-                        Checkpoint(rect, len(self.checkpoints))
-                    )
+                        self.checkpoints.append(
+                            Checkpoint(set(pixels), rect, len(self.checkpoints), colour, self.map_mask_checkpoints.height)
+                        )
 
     def on_draw(self):
         self.clear()
@@ -120,24 +117,15 @@ class RacerView(arcade.View):
         )
 
         # Clamp to map image bounds
-        px = max(0, min(px, self.map.width - 1))
-        py = max(0, min(py, self.map.height - 1))
-
-        if arcade.check_for_collision(self.car, self.finish_line ) and self.checkpoints_passed >= 52:
-            print("Finished!")
-            arcade.close_window()
-
-        # Checkpoint and end detection
-        r_c, g_c, b_c = self.mask_checkpoints_pixels[px, py]
-
-        if (r_c, g_c, b_c) == self.checkpoint_colour[self.current_colour_index] and self.checkpoints_passed < 52:
-            if not self.on_checkpoint:
-                self.checkpoints_passed += 1
-                self.on_checkpoint = True
-                self.current_colour_index += 1
-                if (self.current_colour_index % 4) == 0:
-                    self.current_colour_index = 0
-                print(f"Checkpoint {self.checkpoints_passed} passed, next colour: {self.checkpoint_colour[self.current_colour_index]}")
+        current_colour = self.checkpoint_colour[self.current_colour_index]
+        for cp in self.checkpoints:
+            if cp.colour == current_colour and cp.rect.point_in_rect((self.car.center_x, self.car.center_y)):
+                if not self.on_checkpoint:
+                    self.checkpoints_passed += 1
+                    self.on_checkpoint = True
+                    self.current_colour_index = (self.current_colour_index + 1) % 4
+                    print(f"Checkpoint {self.checkpoints_passed} passed")
+                break
         else:
             self.on_checkpoint = False
 
@@ -219,7 +207,7 @@ class RacerView(arcade.View):
 
         return px, py
     
-    def flood_fill_checkpoint(self, start_x, start_y, visited):
+    def flood_fill_checkpoint(self, start_x, start_y, visited, target_colour):
         stack = [(start_x, start_y)]
         pixels = []
 
@@ -227,7 +215,7 @@ class RacerView(arcade.View):
             x, y = stack.pop()
             if (x, y) in visited:
                 continue
-            if self.mask_checkpoints_pixels[x, y] != (188, 6, 6):
+            if self.mask_checkpoints_pixels[x, y] != target_colour:
                 continue
 
             visited.add((x, y))
@@ -239,6 +227,6 @@ class RacerView(arcade.View):
             ])
 
         return pixels
-    
+        
     def collision(self):
         arcade.close_window()

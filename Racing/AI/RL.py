@@ -1,4 +1,10 @@
 
+ACTIONS [
+    "Accelerate",
+    "Brake",
+    "TurnL",
+    "TurnR"
+]
 
 # Training constants
 LEARNING_RATE = 0.1
@@ -11,7 +17,7 @@ TRAINING_EPISODES = 2000
 class RL:
     def __init__(self):
         self.q_table = {}
-        
+
         
     def get_state(self):
         pass

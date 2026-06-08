@@ -1,10 +1,12 @@
 import arcade
 
 class Checkpoint:
-    def __init__(self, rect: arcade.Rect, index: int):
+    def __init__(self, pixels: set, rect: arcade.Rect, index: int, colour: tuple, world_height: int):
+        self.pixels = pixels
         self.rect = rect
         self.index = index
+        self.colour = colour
         self.passed = False
 
-    def contains(self, x, y):
-        return self.rect.contains(x, y)
+    def contains_mask(self, px, py):
+        return (px, py) in self.pixels
