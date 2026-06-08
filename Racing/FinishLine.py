@@ -6,5 +6,5 @@ class FinishLine(arcade.Sprite):
         super().__init__(image_file, scale)
 
     def is_crossed(self, car: arcade.Sprite) -> bool:
-        # Simple bounding box collision detection
+        # Bounding box collision detection
         return arcade.check_for_collision(self, car)

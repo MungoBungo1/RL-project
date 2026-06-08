@@ -1,9 +1,11 @@
 import arcade
 import time
+import math
 from Car import Car
 from FinishLine import FinishLine
 from PIL import Image
 from Checkpoint import Checkpoint
+from AI.RL import RL
 
 class RacerView(arcade.View):
 
@@ -80,6 +82,8 @@ class RacerView(arcade.View):
                         self.checkpoints.append(
                             Checkpoint(set(pixels), rect, len(self.checkpoints), colour, self.map_mask_checkpoints.height)
                         )
+
+        self.RL = RL()
 
     def on_draw(self):
         self.clear()
@@ -163,6 +167,8 @@ class RacerView(arcade.View):
         self.camera.position = self.car.position
         
         self.sprite_list.update()
+
+        self.RL.get_state(self.car, self.checkpoints,self.current_colour_index, self.checkpoint_colour)
 
     # Key Press Handler
     def on_key_press(self, symbol, modifiers):
